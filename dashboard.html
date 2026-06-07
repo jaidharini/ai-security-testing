@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Security Testing Dashboard</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #0D1B2A;
+    color: #E8F0F7;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 32px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #1B2A3B;
+  }
+
+  .shield {
+    width: 52px;
+    height: 52px;
+    background: #F4A829;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+
+  .header-text h1 {
+    font-size: 24px;
+    font-weight: 700;
+    color: #FFFFFF;
+  }
+
+  .header-text p {
+    font-size: 13px;
+    color: #8899AA;
+    margin-top: 2px;
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 28px;
+  }
+
+  .stat-card {
+    background: #1B2A3B;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    border: 1px solid #243547;
+  }
+
+  .stat-number {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+    color: #8899AA;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .total .stat-number { color: #F4A829; }
+  .pass .stat-number { color: #2ECC71; }
+  .partial .stat-number { color: #F39C12; }
+  .fail .stat-number { color: #E74C3C; }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #8899AA;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+  }
+
+  .table-wrapper {
+    background: #1B2A3B;
+    border-radius: 12px;
+    border: 1px solid #243547;
+    overflow: hidden;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead tr {
+    background: #243547;
+  }
+
+  thead th {
+    padding: 12px 16px;
+    text-align: left;
+    font-size: 11px;
+    font-weight: 600;
+    color: #8899AA;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  tbody tr {
+    border-top: 1px solid #243547;
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover {
+    background: #243547;
+  }
+
+  td {
+    padding: 12px 16px;
+    color: #C8D8E8;
+    vertical-align: top;
+  }
+
+  .test-id {
+    font-family: monospace;
+    font-size: 12px;
+    color: #F4A829;
+    font-weight: 600;
+  }
+
+  .category-badge {
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .badge-injection { background: #1a2744; color: #7EB3F5; }
+  .badge-jailbreak { background: #2a1a44; color: #B07EF5; }
+  .badge-extraction { background: #441a2a; color: #F57EB0; }
+  .badge-leakage { background: #1a3344; color: #7ECEF5; }
+  .badge-tool { background: #442a1a; color: #F5B07E; }
+  .badge-multiturn { background: #1a4422; color: #7EF5A3; }
+
+  .result-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .result-pass { background: #0d2e1a; color: #2ECC71; border: 1px solid #1a5c30; }
+  .result-partial { background: #2e1f0d; color: #F39C12; border: 1px solid #5c3a1a; }
+  .result-fail { background: #2e0d0d; color: #E74C3C; border: 1px solid #5c1a1a; }
+
+  .prompt-text {
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 12px;
+    color: #8899AA;
+  }
+
+  .response-text {
+    max-width: 250px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    font-size: 12px;
+    color: #C8D8E8;
+  }
+
+  .loading {
+    text-align: center;
+    padding: 60px;
+    color: #8899AA;
+  }
+
+  .loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid #243547;
+    border-top-color: #F4A829;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .error-msg {
+    text-align: center;
+    padding: 40px;
+    color: #E74C3C;
+    font-size: 14px;
+  }
+
+  .footer {
+    margin-top: 24px;
+    text-align: center;
+    font-size: 12px;
+    color: #445566;
+  }
+
+  .refresh-btn {
+    background: #F4A829;
+    color: #0D1B2A;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 16px;
+    transition: opacity 0.2s;
+  }
+
+  .refresh-btn:hover { opacity: 0.85; }
+
+  .timestamp {
+    font-size: 11px;
+    color: #445566;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="shield">🛡️</div>
+  <div class="header-text">
+    <h1>AI Security Testing Dashboard</h1>
+    <p>HR Assistant — Prompt Attack Evaluation Results</p>
+  </div>
+  <button class="refresh-btn" onclick="loadResults()">↻ Refresh</button>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card total">
+    <div class="stat-number" id="total">—</div>
+    <div class="stat-label">Total Tests</div>
+  </div>
+  <div class="stat-card pass">
+    <div class="stat-number" id="pass-count">—</div>
+    <div class="stat-label">✅ Pass</div>
+  </div>
+  <div class="stat-card partial">
+    <div class="stat-number" id="partial-count">—</div>
+    <div class="stat-label">⚠️ Partial Fail</div>
+  </div>
+  <div class="stat-card fail">
+    <div class="stat-number" id="fail-count">—</div>
+    <div class="stat-label">❌ Fail</div>
+  </div>
+</div>
+
+<div class="section-title">Test Results</div>
+
+<div class="table-wrapper">
+  <div class="loading" id="loading">
+    <div class="loading-spinner"></div>
+    <div>Loading results from Supabase...</div>
+  </div>
+  <div class="error-msg" id="error" style="display:none"></div>
+  <table id="results-table" style="display:none">
+    <thead>
+      <tr>
+        <th>Test ID</th>
+        <th>Category</th>
+        <th>Prompt</th>
+        <th>Response</th>
+        <th>Result</th>
+        <th>Timestamp</th>
+      </tr>
+    </thead>
+    <tbody id="table-body"></tbody>
+  </table>
+</div>
+
+<div class="footer">
+  AI Security Testing Project &nbsp;|&nbsp; OpenRouter + Supabase &nbsp;|&nbsp; Jai Dharini C S
+</div>
+
+<script>
+const SUPABASE_URL = "https://pzkpsuvujesbhtbvsmqr.supabase.co";
+const SUPABASE_KEY = "sb_publishable_-KhilJo8E6MD-wGuDNLqtg_ouMGZcX3";
+
+function getCategoryClass(category) {
+  if (category.includes("Injection")) return "badge-injection";
+  if (category.includes("Jailbreak")) return "badge-jailbreak";
+  if (category.includes("Extraction")) return "badge-extraction";
+  if (category.includes("Leakage")) return "badge-leakage";
+  if (category.includes("Tool")) return "badge-tool";
+  if (category.includes("Multi")) return "badge-multiturn";
+  return "badge-injection";
+}
+
+function getResultClass(result) {
+  if (result === "Pass") return "result-pass";
+  if (result === "Fail") return "result-fail";
+  return "result-partial";
+}
+
+function getResultIcon(result) {
+  if (result === "Pass") return "✅";
+  if (result === "Fail") return "❌";
+  return "⚠️";
+}
+
+function formatTime(ts) {
+  if (!ts) return "—";
+  const d = new Date(ts);
+  return d.toLocaleDateString() + " " + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+}
+
+async function loadResults() {
+  document.getElementById("loading").style.display = "block";
+  document.getElementById("error").style.display = "none";
+  document.getElementById("results-table").style.display = "none";
+
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/test_results?select=*&order=id.asc`,
+      {
+        headers: {
+          "apikey": SUPABASE_KEY,
+          "Authorization": `Bearer ${SUPABASE_KEY}`
+        }
+      }
+    );
+
+    if (!res.ok) throw new Error("Failed to fetch: " + res.status);
+
+    const data = await res.json();
+
+    const pass = data.filter(r => r.result === "Pass").length;
+    const partial = data.filter(r => r.result === "Partial Fail").length;
+    const fail = data.filter(r => r.result === "Fail").length;
+
+    document.getElementById("total").textContent = data.length;
+    document.getElementById("pass-count").textContent = pass;
+    document.getElementById("partial-count").textContent = partial;
+    document.getElementById("fail-count").textContent = fail;
+
+    const tbody = document.getElementById("table-body");
+    tbody.innerHTML = "";
+
+    data.forEach(row => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><span class="test-id">${row.test_id || "—"}</span></td>
+        <td><span class="category-badge ${getCategoryClass(row.category || "")}">${row.category || "—"}</span></td>
+        <td><div class="prompt-text" title="${row.prompt || ""}">${row.prompt || "—"}</div></td>
+        <td><div class="response-text" title="${row.response || ""}">${row.response || "—"}</div></td>
+        <td><span class="result-badge ${getResultClass(row.result || "")}">${getResultIcon(row.result)} ${row.result || "—"}</span></td>
+        <td><span class="timestamp">${formatTime(row.created_at)}</span></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("results-table").style.display = "table";
+
+  } catch (err) {
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("error").style.display = "block";
+    document.getElementById("error").textContent = "Error loading data: " + err.message;
+  }
+}
+
+loadResults();
+</script>
+</body>
+</html>
